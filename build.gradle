@@ -1,0 +1,54 @@
+/*
+ * 'victor de la rosa'  '1/05/17 19:04'  Gradle 2.9
+ *
+ */
+
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+
+
+
+task(compileJJTree, type: JavaExec) {
+    main = 'jjtree'
+    classpath = sourceSets.main.runtimeClasspath
+    args('-OUTPUT_DIRECTORY:src/main/build/com/vdlr/shell/parser', 'src/main/jjtree/ShellParser.jjt')
+}
+
+task(compileJavaCC, type: JavaExec) {
+    main = 'javacc'
+    classpath = sourceSets.main.runtimeClasspath
+    args('-OUTPUT_DIRECTORY:src/main/build/com/vdlr/shell/parser', 'src/main/build/com/vdlr/shell/parser/ShellParser.jj')
+}
+
+compileJava.doFirst {
+  tasks.compileJJTree.execute()
+  tasks.compileJavaCC.execute()
+}
+
+defaultTasks('compileJava')
+ 
+
+// In this section you declare where to find the dependencies of your project
+repositories {
+    // Use 'jcenter' for resolving your dependencies.
+    // You can declare any Maven/Ivy/file repository here.
+    jcenter()
+}
+
+// In this section you declare the dependencies for your production and test code
+dependencies {
+    // The production code uses the SLF4J logging API at compile time
+    compile 'org.slf4j:slf4j-api:1.7.13'
+
+    // https://mvnrepository.com/artifact/net.java.dev.javacc/javacc
+    compile group: 'net.java.dev.javacc', name: 'javacc', version: '6.1.2'
+
+
+    // Declare the dependency for your favourite test framework you want to use in your tests.
+    // TestNG is also supported by the Gradle Test task. Just change the
+    // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
+    // 'test.useTestNG()' to your build script.
+    testCompile 'junit:junit:4.12'
+}
+
+

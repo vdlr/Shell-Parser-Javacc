@@ -1,0 +1,669 @@
+/**
+ *
+ */
+
+options{
+  CHOICE_AMBIGUITY_CHECK = 2;
+  OTHER_AMBIGUITY_CHECK = 1;
+  STATIC = false;
+  DEBUG_PARSER = false;
+  DEBUG_LOOKAHEAD = false;
+  DEBUG_TOKEN_MANAGER = false;
+  ERROR_REPORTING = false;
+  //
+JAVA_UNICODE_ESCAPE = true;
+  UNICODE_INPUT = false;
+  IGNORE_CASE = false;
+  USER_TOKEN_MANAGER = false;
+  USER_CHAR_STREAM = false;
+  BUILD_PARSER = true;
+  BUILD_TOKEN_MANAGER = true;
+  SANITY_CHECK = true;
+  FORCE_LA_CHECK = false;
+  NODE_CLASS = "ShellNode";
+  NODE_USES_PARSER = true;
+}
+
+
+PARSER_BEGIN(ShellParser)
+package com.vdlr.shell.parser;
+
+/**
+ * Shell Parser. 
+ * victor de la rosa - 2017
+ */ 
+public class ShellParser {  
+  
+  private boolean inlineCommand = false;
+  
+  public ShellParser(){
+  
+  }
+
+  public static void main(String[] args) {
+          
+    try {
+      ShellParser t = new ShellParser();
+      ShellNode n = t.parse();
+      
+      
+      System.out.println("Thank you. " + n);
+    } catch (Exception e) {
+      
+      e.printStackTrace();
+      System.out.println(e.getMessage());
+
+    }
+    
+  }
+  
+  
+}
+
+PARSER_END(ShellParser)
+
+//skip spaces, tabs, continuation line
+SKIP:{
+  " "
+  | "\t"
+  | "\\\n\r"
+  | "\\\r\n"
+  | "\\\n"
+  | "\\\r"   
+}
+
+TOKEN:{
+  <HASH:"#">
+}
+
+SPECIAL_TOKEN: {
+  <INLINE_COMMENT: <HASH> (~["\n","\r"])* ( <CRLF> )* > 
+}
+
+TOKEN:{
+  <CRLF: ( "\n" | "\r" | "\n\r" | "\r\n" )>
+  | <SEMICOLON:";">  
+  | <DOUBLESEMICOLON:";;">
+  | <PIPE:"|">
+  | <AMP:"&">
+  | <DOUBLEAMP:"&&">
+  | <DOUBLEPIPE:"||">
+  | <EQUAL:"=">
+  | <DOUBLEEQUAL:"==">
+  | <DIFFERENT:"!=">
+  | <CIRCUMFLEX:"^">
+  | <MINOR:"<">
+  | <MAJOR:">">
+  | <MINEQ:"<=">
+  | <MAJEQ:">=">
+  | <DOUBLEMIN:"<<">
+  | <DOUBLEMAJ:">>">
+  | <PRODUCT:"*">
+  | <DIVISION:"/">
+  | <MODULE:"%">
+  | <PLUS:"+">
+  | <MIN:"-">
+  | <DOLLAR:"$">
+  | <ESCP:"!">
+  | <LBRACE:"{">
+  | <RBRACE:"}">
+  | <LTON:"(">
+  | <RTON:")">
+  | <DLTON:"((">
+  | <DRTON:"))">
+  | <CONDITION_O:"[">
+  | <CONDITION_C:"]">
+  | <DCONDITION_O:"[[">
+  | <DCONDITION_C:"]]">
+  | <APOS:"'">
+  | <QUOTE:"\"">
+  | <CQUOTE:"`"> 
+}
+
+TOKEN:{
+  <IF:"if">
+  | <ELIF:"elif">
+  | <ELSE:"else">
+  | <FI:"fi">
+  | <FOR:"for">
+  | <DO:"do">
+  | <DONE:"done">
+  | <WHILE:"while">
+  | <UNTIL:"until">
+  | <SELECT:"select">
+  | <IN:"in">
+  | <CASE:"case">
+  | <ESAC:"esac">
+  | <FUNCTION:"function">
+  | <RETURN:"return">
+  | <THEN:"then">
+  | <DECLARE:"declare">
+  | <EXEC:"exec">
+  | <EXIT:"exit">
+  | <READ:"read">
+  | <EXPORT:"export">
+  | <TEST:"test">
+  | <EXPR:"expr">
+  | <CALC:"calc">
+}
+
+<REDIRECTIN> SKIP:{
+  " "
+  | "\t"
+}
+
+<REDIRECTIN> TOKEN : {
+  <RI_CRLF: ( "\n" | "\r" | "\n\r" | "\r\n" )>
+  | <RI_LINE: ~["\r","\n"](~["\r","\n"])*>
+}
+
+<REDIRECTIN_INLINECOMMAND> TOKEN : {
+  <RI_CRLF_IL: ( "\n" | "\r" | "\n\r" | "\r\n" )>
+  | <RI_LINE_IL: ~["`","\r","\n"](~["`","\r","\n"])*>
+}
+
+TOKEN:{
+  <BUILTINCOMMAND: (<ALIAS>|<CAT>|<CUT>|<FACT>|<BREAK>|<CD>|<COMMAND>|<TYPESET>|<ECHO>|<CHMOD>|<CHOWN>|<SH>|<LS>|<MV>|<RM>|<GREP>|<TEE>|<HELP>|<KILL>|<SUSPEND>|<TIMES>|<ULIMIT>|<UMASK>|<UNALIAS>|<UNSET>|<WAIT>)>
+  | <#ALIAS:"alias">
+  | <#CAT:"cat">
+  | <#CUT:"cut">
+  | <#FACT:"fact">
+  | <#BREAK:"break">
+  | <#CD:"cd">
+  | <#COMMAND:"command">
+  | <#TYPESET:"typeset">
+  | <#ECHO:"echo">
+  | <#CHMOD:"chmod">
+  | <#CHOWN:"chown">
+  | <#SH:"sh">
+  | <#LS:"ls">
+  | <#MV:"mv">
+  | <#RM:"rm">
+  | <#GREP:"grep">
+  | <#TEE:"tee">
+  | <#HELP:"help">
+  | <#KILL:"kill">
+  | <#SUSPEND:"suspend">
+  | <#TIMES:"times">
+  | <#ULIMIT:"ulimit">
+  | <#UMASK:"umask">
+  | <#UNALIAS:"unalias">
+  | <#UNSET:"unset">
+  | <#WAIT:"wait">
+}
+
+
+
+TOKEN:{
+  <TRUE:"true">
+  | <FALSE:"false">
+  | <INTEGER:["0"-"9"](["0"-"9"])*>  
+  | <#VARNAME:<LETTERA>(<LETTERA> | <DIGIT>)*>
+    | <#LETTERA:["_", "A"-"Z", "a"-"z"]>
+    | <#DIGIT:["0"-"9"]>
+  | <ESCAPED: "\\" ~["\n","\r"]>
+  | <DECLAREVAR:<VARNAME><EQUAL>>    
+  | <VARIN:<VARNAME><IN>>
+  | <PATHNAME: ["a"-"z", "A"-"Z", "0"-"9", "/", "_", "."] (["a"-"z", "A"-"Z", "0"-"9", "+", "-", "/", "_", ":", "@", "."])*>
+  | <STRINGA:<APOS>(~["'"])*<APOS>>  
+  | <STRINGB:<QUOTE>(~["\""])*<QUOTE>>
+  | <SPECIALV:<DOLLAR>["#","*","@","!","?","_","-","0"-"9"]>
+  | <SPECIALR:<AMP>["0"-"9"]>
+  | <VARREF:<DOLLAR><VARNAME> (<PLUS>)? >
+  | <VARREF2:<DOLLAR><LBRACE><VARNAME><RBRACE>>
+  | <FUNCTION2:<VARNAME><LTON><RTON>>  
+  | <OPT_A:<MIN>(<P_A>)>
+  | <OPT_O:<MIN>(<P_O>)>
+  | <OPTS:(<MIN>|<MIN><MIN>)(<P_A>|<P_B>|<P_C>|<P_D>|<P_E>|<P_EU>|<P_F>|<P_FU>|<P_G>|<P_H>|<P_HU>|<P_I>|<P_LU>|<P_L>|<P_N>|<P_M>|<P_O>|<P_P>|<P_PU>|<P41>|<P_R>|<P_RU>|<P_S>|<P_SU>|<P_T>|<P_U>|<P_V>|<P_VU>|<P_W>|<P_X>|<P_Z>|<P_NT>|<P_OT>|<P_EF>|<P_EQ>|<P_NE>|<P_LE>|<P_GE>|<P_LT>|<P_GT>|<P_CL>)+>
+  | <#P_A:"a">
+  | <#P_B:"b">
+  | <#P_C:"c">
+  | <#P_D:"d">
+  | <#P_E:"e">
+  | <#P_EU:"E">  
+  | <#P_F:"f">
+  | <#P_FU:"F">
+  | <#P_G:"g">
+  | <#P_H:"h">
+  | <#P_HU:"H">
+  | <#P_I:"i">  
+  | <#P_LU:"L">
+  | <#P_L:"l">
+  | <#P_N:"n">
+  | <#P_M:"m">
+  | <#P_O:"o">
+  | <#P_P:"p">
+  | <#P_PU:"P">
+  | <#P41:"q">  
+  | <#P_R:"r">
+  | <#P_RU:"R">
+  | <#P_S:"s">
+  | <#P_SU:"S">
+  | <#P_T:"t">
+  | <#P_U:"u">
+  | <#P_V:"v">
+  | <#P_VU:"V">
+  | <#P_W:"w">
+  | <#P_X:"x">
+  | <#P_Z:"z">
+  | <#P_NT:"nt">
+  | <#P_OT:"ot">
+  | <#P_EF:"ef">  
+  | <#P_EQ:"eq">
+  | <#P_NE:"ne">
+  | <#P_LE:"le">
+  | <#P_GE:"ge">
+  | <#P_LT:"lt">
+  | <#P_GT:"gt">
+  | <#P_CL:"cl">
+}
+
+
+ 
+
+/** Main production. */
+ShellNode parse() #script : {}
+{
+  try {
+  ( list() )+ 
+  <EOF>
+  {         
+    return jjtThis;
+  }
+  }
+    catch (ParseException e) {    
+    e.printStackTrace();
+    throw e;  
+  }
+}
+
+
+
+///////////////////////////////////////
+// commands
+
+void read_stm() #read_stm(false) : { Token t; }
+{
+  jjtThis.value=<READ> #builtincommand(true) ( option() | expression() )+ #params
+}
+
+void command() #command(false) : { Token t; }
+{
+  jjtThis.value=declarevar()   #variableassigment(true)  ( expression() | inlinecommands() )+ #value 
+  | jjtThis.value=<EXPORT>     #builtincommand(true)     
+            ( option() )* 
+            (
+            jjtThis.value=declarevar() #variableassigment(true) ( expression() | inlinecommands() )+ #value             
+            | expression() #name 
+            )+ #variables
+  | jjtThis.value=<EXIT>                #builtincommand(true)     ( integer() | varref() )?   #params    
+  | jjtThis.value=<EXPR>                #builtincommand(true)     ( optionorparam() | inlinecommands() )+  #params
+  | jjtThis.value=<CALC>                #builtincommand(true)     ( optionorparam() | inlinecommands() )+  #params 
+  | jjtThis.value=<BUILTINCOMMAND>      #builtincommand(true)  ( optionorparam() | inlinecommands() )* #params 
+  | t=path()  {jjtThis.value=t.image;}  #pathcommand(true)     ( optionorparam() | inlinecommands() )* #params
+  | read_stm()      
+}
+
+void inlinecommand() : { Token t; }
+{  
+  (
+  jjtThis.value=declarevar() #variableassigment(true) expression()  #value
+  | jjtThis.value=<EXPORT>     #builtincommand(true)     
+         ( 
+         jjtThis.value=declarevar() #variableassigment(true) expression()  #value          
+         | jjtThis.value=expression() #name 
+         )+ #variables
+  | jjtThis.value=<EXIT>              #builtincommand(true)  ( integer() | varref() )? #params 
+  | jjtThis.value=<EXPR>              #builtincommand(true)  ( optionorparam() )+ #params 
+  | jjtThis.value=<CALC>              #builtincommand(true)  ( optionorparam() )+ #params  
+  | jjtThis.value=<BUILTINCOMMAND>    #builtincommand(true)  ( optionorparam() )* #params 
+  | t=path() {jjtThis.value=t.image;} #pathcommand(true)     ( optionorparam() )* #params    
+  )
+  ( redirectStdInFromFile() | redirectStdIn_inlinecommand() )?  
+}
+
+
+
+///////////////////////////////
+// bucles
+
+void for_stm() #for_stm : { Token t; }
+{ 
+  t=<FOR> ( ( <CRLF> )* testcommand() #condition
+          | (t=<VARIN> | t=<PATHNAME><IN>) #var_in(true) {jjtThis.value = t.image;} ( expression() | inlinecommands() )+ 
+          )  ( <CRLF> )+
+    <DO> #do_stm(true) ( list() )+
+    <DONE> #done_stm(true)
+}
+
+void while_stm() #while_stm : { Token t; }
+{ 
+  <WHILE> (
+     ( <CRLF> )* testcommand() #condition(true) ( <CRLF> )* 
+     | ":" #conditiontrue(true) ( <CRLF> )* 
+  )
+  <DO> ( ( list() )+ #commands ) #do_stm(true) 
+  <DONE> 
+}
+
+void case_stm() : { Token t; }
+{ 
+  t=<CASE> expression() #option(true) <IN> #in_stm(true) ( <CRLF> )*
+       (  
+          ( expression() ( <PIPE> #pipe_separator expression() )* ) #case_option <RTON>  ( <CRLF> )*
+          ( stm() ( <CRLF> )* )+  #commands
+          <DOUBLESEMICOLON> ( <CRLF> )*
+        )+  #case_options
+    <ESAC>  
+}
+
+void if_stm() : { Token t; }
+{ 
+  <IF> ( <CRLF> )* then_stm()
+    ( <ELIF> #elif_stm(true)  ( <CRLF> )* then_stm() )*  
+    ( <ELSE> #else_stmd(true) ( list() )+ #commands )?  
+    <FI>  
+}
+
+void then_stm() #void : {}
+{
+  ( testcommand() | inlinecommands() ) #condition(true) ( <CRLF> )* <THEN> #then_stm(true) ( list() )+ #commands
+}
+
+///////////////////////////////
+// test expressions
+
+void testcommand() : { Token t; }
+{
+  ( <CONDITION_O> #sqrbrkts_open(true) testexpr() <CONDITION_C> #sqrbrkts_close(true)
+  | <DCONDITION_O> #dblsqrbrkts_open(true) testexpr() <DCONDITION_C> #dblsqrbrkts_close(true)
+  | <TEST> #test testexpr()
+  | read_stm() )
+  ( 
+    LOOKAHEAD(2)
+    ( t=<DOUBLEAMP> #and_operator 
+      | t=<DOUBLEPIPE> #or_operator
+      | <OPT_A> #and_operator
+      | <OPT_O> #or_operator )   testcommand() 
+  )*  
+  
+  ( <SEMICOLON> )?
+}
+
+void testexpr() : { }
+{
+  ( <LTON> testexpr() <RTON> ) #simpleparenthesis  
+  | ( <DLTON> testexpr() <DRTON> ) #dobleparenthesis 
+  |  ( <ESCP> #escape_char )?           
+     (
+      expression()
+      | inlinecommands()
+      | option()                                         
+     )+  #conditions      
+}
+
+////////////////////////////////
+// commands grammar
+
+void list()  #list(>1) : {}
+{
+  ( <CRLF> )* sublist()  ( <SEMICOLON> | <AMP> )?  ( <CRLF> )*   
+}
+
+void sublist() #sublist(>1) : {}
+{
+  pipeline() ( ( <DOUBLEAMP> | <DOUBLEPIPE> ) pipeline() )*
+}
+
+void pipeline() #pipeline(>1)  : {}
+{
+  stm() ( ( <PIPE> ) stm() )*       
+}
+
+void stm() #statement(>1) : {}
+{
+  (   
+  redirectOut()
+  | if_stm()
+  | case_stm()
+  | for_stm()
+  | while_stm() 
+  | function()
+  | command() 
+  | commandexpression()
+  )
+  ( redirectStdInFromFile() | redirectStdIn() )?   
+  ( redirectOut() )*    
+}
+
+////////////////////////////////////////
+//
+//function
+//
+
+void function() : {}
+{
+
+  <FUNCTION> <FUNCTION2> ( <CRLF> )* <LBRACE> ( list() )+ <RBRACE>
+  | <FUNCTION2> ( <CRLF> )* <LBRACE> ( list() )+ <RBRACE>
+}
+
+//////////////////////////////////////////
+// 
+// inline commands  `inlinecommand()`
+// 
+// inlinecommand() is the same as command() but doesn't espect nested inlinecommand()
+//   
+
+void inlinesublist() #sublist : {}
+{
+  inlinepipeline() ( ( <DOUBLEAMP> | <DOUBLEPIPE> ) inlinepipeline() )*
+}
+void inlinepipeline() #pipeline : {}
+{
+  inlinecommand() ( ( <PIPE> ) inlinecommand() )*
+}
+
+////////////////////////////////////////////////
+// basic expressions 
+
+void optionorparam() #optionorparam(false) : {}
+{
+  option() | expression() 
+  { concatenateImage(jjtThis); }
+}
+
+void commandexpression() : {}
+{
+  (
+  interpolatingquotes()
+  | specialvariable()
+  | varref()
+  )+
+}
+
+Token expression() : { Token t; }
+{ 
+  (
+  integer() 
+  | truefalse()
+  | escaped()
+  | t=path() {jjtThis.value = t.image;}  #literal 
+  | operator()
+  | literalquotes() 
+  | interpolatingquotes() 
+  | specialvariable()
+  | specialredirect()
+  | varref()
+  | commandstring()  
+  )+ 
+  { concatenateImage(jjtThis);
+    t = new Token();
+    t.image = jjtThis.getImage();
+    return t; }
+}
+
+void commandstring() : { Token t; }
+{
+  t=<DOLLAR><LTON> ( ( <CRLF> )* list() )* <RTON>  
+  {    
+    // <COMMANDXP2:<DOLLAR><LTON>(~["(",")"])*<RTON>>
+  }
+}
+
+void inlinecommands() : { Token t; }
+{
+  <CQUOTE> inlinesublist() <CQUOTE> 
+  {    
+    // <COMMANDSTRING:<CQUOTE>(~["`"])+<CQUOTE>>
+  }
+}
+
+Token declarevar() #void : { Token t; }
+{
+  t=<DECLAREVAR>
+  { t.image = t.image.substring(0,t.image.length() - 1);
+    return t;}
+}
+
+void integer() : { Token t; }
+{
+  t=<INTEGER> {jjtThis.value = t.image;} 
+}
+
+void escaped() : { Token t; }
+{
+  t=<ESCAPED> {jjtThis.value = t.image;} 
+}
+
+Token path() #path(false) : { Token t; }
+{  
+  { String value = ""; }
+  ( t=<PATHNAME> { value += t.image;}  
+  | t=<DIVISION> { value += t.image;} 
+  | t=":" { value += t.image;} 
+  | t="@" { value += t.image;} 
+  | t="!" { value += t.image;} 
+  | t="?" { value += t.image;} 
+  | t="~" { value += t.image;} 
+  | t=<VARREF>  { value += t.image; jjtThis.value = t.image; } #varref
+  )+  
+  { 
+    t = new Token();
+    t.image = value;
+    return t; 
+  }  
+}
+
+void literalquotes() : { Token t; }
+{
+  t=<STRINGA>  {jjtThis.value = t.image;}
+}
+
+void interpolatingquotes() : { Token t; }
+{
+  t=<STRINGB>  {jjtThis.value = t.image;}
+}
+
+void varref() : { Token t; }
+{
+  t=<VARREF>     {jjtThis.value = t.image;}
+  | t=<VARREF2>  {jjtThis.value = t.image;}
+}
+
+void specialvariable() : { Token t; }
+{
+  t=<SPECIALV> {jjtThis.value = t.image;}
+}
+
+void specialredirect() : { Token t; }
+{
+  t=<SPECIALR> {jjtThis.value = t.image;}
+}
+
+void truefalse() : { Token t; } {
+  t=<TRUE>    {jjtThis.value = t.image;}
+  | t=<FALSE> {jjtThis.value = t.image;}
+}
+
+void operator() : { Token t; }
+{
+  t=<EQUAL>          {jjtThis.value = t.image;}
+  | t=<DIFFERENT>     {jjtThis.value = t.image;}
+  | t=<DOUBLEEQUAL>   {jjtThis.value = t.image;}
+  | t=<MINEQ>         {jjtThis.value = t.image;}
+  | t=<MAJEQ>         {jjtThis.value = t.image;}
+  | t=<PLUS>          {jjtThis.value = t.image;}
+  | t=<MIN>           {jjtThis.value = t.image;}
+  | t=<PRODUCT>       {jjtThis.value = t.image;}
+  | t=<DIVISION>      {jjtThis.value = t.image;}
+  | t=<MODULE>      {jjtThis.value = t.image;}  
+}
+
+void option() : { Token t; }
+{
+  t=<OPTS>    {jjtThis.value = t.image;}
+  | t=<OPT_A> {jjtThis.value = t.image;}
+  | t=<OPT_O> {jjtThis.value = t.image;}
+  | t=<PLUS> expression() {jjtThis.value = t.image;}
+  | t=<CIRCUMFLEX> expression() {jjtThis.value = t.image;} 
+}
+
+
+
+
+void redirectStdInFromFile() : { Token t; }
+{   
+  t=<MINOR> expression()  {jjtThis.value = t.image;}                           
+}
+
+String getLimitExpression() #limitExpression : { Token t; String e = ""; } {
+  ( t=<PATHNAME> { e = e + t.image; }  
+    | t=<ESCP> { e = e + t.image; } 
+  )+
+  {return e;}
+}
+
+void redirectStdIn() : { Token t; Token l; String limitExpression; }
+{   
+  t=<DOUBLEMIN>  {jjtThis.value = t.image;}
+  ( limitExpression=getLimitExpression() )         
+  ( redirectOut() )?
+  <CRLF>
+  { token_source.SwitchTo(REDIRECTIN); }
+  ( <RI_CRLF> 
+    | l=<RI_LINE> { jjtThis.value = l.image.trim();} #stdInLine(true) (<RI_CRLF>)?  { if(l.image.trim().equals(limitExpression)) token_source.SwitchTo(DEFAULT); }            
+  )+ 
+  (<CRLF>)?
+}
+
+void redirectStdIn_inlinecommand() #redirectStdIn : { Token t; Token l; Token limitExpression; }
+{   
+  t=<DOUBLEMIN>  {jjtThis.value = t.image;}
+  ( limitExpression=<PATHNAME> | limitExpression=<ESCP> )         
+  ( redirectOut() )?
+  <CRLF>
+  { token_source.SwitchTo(REDIRECTIN_INLINECOMMAND); }
+  ( <RI_CRLF_IL>
+    | l=<RI_LINE_IL> { jjtThis.value = l.image.trim();} #stdInLine(true) {if(l.image.trim().equals(limitExpression.image)) token_source.SwitchTo(DEFAULT); }          
+  )+ 
+  (<CRLF>)?
+}
+
+void redirectOut() : { Token t; }
+{   
+  ( <INTEGER> )? ( t=<MAJOR> | t=<DOUBLEMAJ> ) expression() {jjtThis.value = t.image;} 
+                                
+}
+
+  
+JAVACODE
+
+//contruye valor de un node concatenando el de todos los hijos
+private void concatenateImage(ShellNode jjtThis) #void {
+    String value = "";
+    for(int n = 0; n< jjtThis.jjtGetNumChildren(); n++){
+      value += jjtThis.getChild(n).getImage();
+    }
+    jjtThis.value = value;
+}
