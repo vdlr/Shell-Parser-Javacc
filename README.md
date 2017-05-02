@@ -1,13 +1,16 @@
-Shell parser based on javacc
+# Shell parser based on javacc
 
-A few months ago we require to develop some rules over shell code, as a result this is a full (almost) parser for 99% of shell (bash, ksh), it do some tricks (in the lexer then in the parser) in order to get a representation of shell structure. 
+A few months ago we require to develop some rules over shell code and needed a parser, as a result this is a full (almost) parser for 99% of shell scripts (bash, ksh), it do some tricks (some in the lexer,some in the parser) in order to get a representation of shell structure. 
 
-How to Test:
-Just copy your file to test/resources, add file to Test class and run JUnit. 
+## How to Test
 
-How is represented:
+Just copy your file to test/resources, add file name to testdata method at ParserTest class and run JUnit. 
+
+## How is represented
+
 It covers grammar, commands and sintaxis decribe here http://hyperpolyglot.org/unix-shells, generated AST tree shows like that:
 
+```
 script
  statement
   variableassigment  (size)
@@ -49,3 +52,4 @@ script
         expression  ($Log)
           varref  ($Log)
           literal  ($Log)
+```
